@@ -1,0 +1,229 @@
+/* General styling */
+body {
+  background-color: #1d1f23;
+  color: #fff;
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+h2 {
+  text-align: center;
+  margin-top: 20px;
+}
+
+.item-container {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr); /* 5 items per row */
+  gap: 20px;
+  padding: 20px;
+  justify-content: center;
+}
+
+.item {
+  background-color: #2b2e33;
+  padding: 20px;
+  text-align: center;
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.8);
+  transition: transform 0.3s, box-shadow 0.3s;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.item:hover {
+  transform: scale(1.05);
+}
+
+.item img {
+  width: 80px;
+  height: 80px;
+  border-radius: 10px;
+  margin: 0 auto;
+}
+
+.item-title {
+  color: #67b7f7;
+  font-weight: bold;
+  margin-top: 10px;
+  font-size: 16px;
+  min-height: 45px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.item-tier {
+  font-size: 14px;
+  color: #d1d1d1;
+  margin: 10px 0;
+}
+.favorite-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 20px;
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  gap: 5px; /* Add space between the heart and text */
+  color: #d1d1d1; /* Use a subtle neutral color */
+  transition: transform 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
+  padding: 8px 12px; /* Add some padding for spacing */
+  border-radius: 50px; /* Create a rounded shape around the button */
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15); /* Soft shadow for depth */
+  font-weight: 600; /* Add some weight for formality */
+  letter-spacing: 0.5px; /* Slight letter-spacing for formality */
+}
+
+.favorite-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 20px;
+  margin-top: 10px;
+  display: flex;
+  justify-content: center; /* Center content horizontally */
+  align-items: center; /* Center content vertically */
+  gap: 5px; /* Add some space between the heart and the text */
+  padding: 8px 15px;
+  border-radius: 50px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  color: #d1d1d1; /* Neutral color for the button text */
+  transition: transform 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.favorite-button:hover {
+  transform: scale(1.05);
+  color: #ffffff;
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+}
+
+.favorite-button span {
+  display: inline-block;
+}
+
+.favorite-button span.heart {
+  font-size: 24px;
+  color: #ff4d4d;
+}
+
+.favorite-button span.heart.unfavorited {
+  color: #ccc;
+}
+
+.favorite-button:focus {
+  outline: none;
+}
+
+/* Filters styling */
+.filters {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  padding: 20px;
+}
+
+.filters select,
+.filters input {
+  padding: 8px;
+  border-radius: 5px;
+  border: 1px solid #444;
+  background-color: #2b2e33;
+  color: #fff;
+  height: 38px; /* Match the button height */
+}
+
+.filters select:focus,
+.filters input:focus {
+  outline: none;
+  border-color: #67b7f7;
+}
+
+/* Button styling */
+button {
+  padding: 10px 20px;
+  border-radius: 5px;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s ease;
+}
+
+button#searchButton {
+  background-color: #007bff;
+  color: white;
+}
+
+button#searchButton:hover {
+  background-color: #0056b3;
+}
+
+button#clearButton,
+button#showFavorites {
+  background-color: #6c757d;
+  color: white;
+}
+
+button#clearButton:hover,
+button#showFavorites:hover {
+  background-color: #5a6268;
+}
+
+button {
+  height: 38px; /* Ensures button height is the same as input/selects */
+}
+
+/* Align the action buttons next to the filters */
+.action-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.action-buttons button {
+  height: 38px;
+  padding: 8px 16px;
+}
+.pagination-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.page-info {
+  margin-bottom: 10px; /* Add some space between the page info and the pagination buttons */
+  font-size: 16px;
+  color: #fff;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px; /* Adjust the spacing between the buttons */
+}
+
+.pagination button {
+  background-color: #333;
+  color: #fff;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.pagination button:disabled {
+  background-color: #555;
+  cursor: not-allowed;
+}
+
+.pagination button.active-page {
+  background-color: #007bff;
+  color: #fff;
+  border: 1px solid #007bff;
+  box-shadow: 0 0 10px rgba(0, 123, 255, 0.5);
+}
