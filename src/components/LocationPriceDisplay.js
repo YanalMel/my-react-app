@@ -1,28 +1,33 @@
 import React, { useState, useEffect } from "react";
 
-// Move processCraftResource outside of the component
-const processCraftResource = (craftresourceArray, enchantmentLevel) => {
+// Recursive function to handle nested craftresource arrays safely
+const processCraftResource = (craftresourceArray) => {
   let materials = [];
 
-  craftresourceArray.forEach((material) => {
-    if (material.craftresource) {
-      // Recursively process nested craft resources
-      materials = materials.concat(
-        processCraftResource(material.craftresource, enchantmentLevel)
-      );
-    } else {
-      // If it's a valid material, process it
-      if (material && material.uniquename && material.count) {
-        materials.push(material);
+  // Safely check if the craftresourceArray exists and is an array
+  if (Array.isArray(craftresourceArray)) {
+    craftresourceArray.forEach((material) => {
+      if (material.craftresource) {
+        // Recursively process nested craft resources
+        materials = materials.concat(
+          processCraftResource(material.craftresource)
+        );
+      } else {
+        // If it's a valid material, process it
+        if (material && material.uniquename && material.count) {
+          materials.push(material);
+        }
       }
-    }
-  });
+    });
+  }
 
   return materials;
 };
 
 const LocationPriceDisplay = ({ location, itemData, enchantmentLevel }) => {
   const [recipes, setRecipes] = useState([]);
+  const [itemPrices, setItemPrices] = useState({});
+  const [potentialProfits, setPotentialProfits] = useState({});
 
   // Helper function to add enchantment level to resource names, excluding artifacts
   const appendEnchantment = (uniquename, enchantmentLevel) => {
@@ -33,106 +38,106 @@ const LocationPriceDisplay = ({ location, itemData, enchantmentLevel }) => {
     return uniquename;
   };
 
-  // Extract base recipes
+  // Extract base recipes and split nested arrays
   useEffect(() => {
-    console.log("ItemData passed to component:", itemData);
+    if (itemData && Array.isArray(itemData.craftresource)) {
+      // First level of craftresource (recipes)
+      const topLevelCraftResources = itemData.craftresource;
 
-    if (itemData && itemData.craftresource) {
-      console.log("ItemData and craftresource exist.");
+      // Safely map over top-level resources and their nested resources
+      const processedRecipes = topLevelCraftResources.map((resource) => {
+        // Ensure that resource.craftresource exists and is an array
+        return Array.isArray(resource.craftresource)
+          ? resource.craftresource.map((nestedResource) => ({
+              materials: processCraftResource(nestedResource.craftresource),
+            }))
+          : [];
+      });
 
-      // Extract all 'Base' recipes and ignore the enchantment levels
-      const baseRecipes = itemData.craftresource.filter(
-        (recipe) => recipe.type === "Base"
-      );
-
-      if (baseRecipes.length > 0) {
-        console.log("Base recipes found:", baseRecipes);
-        const processedRecipes = baseRecipes.map((recipe) =>
-          processCraftResource(recipe.craftresource, enchantmentLevel)
-        );
-        setRecipes(processedRecipes);
-      } else {
-        console.log("No valid base recipe found.");
-        setRecipes([]); // If no valid recipe is found, clear the recipes
-      }
+      // Flatten the resulting array of recipes
+      const flattenedRecipes = processedRecipes.flat();
+      setRecipes(flattenedRecipes);
     } else {
-      console.log("ItemData or craftresource is missing.");
       setRecipes([]); // If itemData or craftresource is missing, clear the recipes
     }
   }, [itemData, enchantmentLevel]);
 
   const calculateTotalCost = (resources) => {
     return resources.reduce((total, resource) => {
-      // Assuming dynamic pricing, you can replace '192' with actual prices per resource from another source if needed
       const resourcePrice = 192; // Example price for now
       return total + resource.count * resourcePrice;
     }, 0);
   };
 
+  const handlePriceChange = (recipeIndex, price) => {
+    const newItemPrices = { ...itemPrices, [recipeIndex]: price };
+    setItemPrices(newItemPrices);
+
+    // Calculate potential profit (example calculation: sale price - craft cost)
+    const craftCost = calculateTotalCost(recipes[recipeIndex].materials);
+    const potentialProfit = price - craftCost;
+    setPotentialProfits({
+      ...potentialProfits,
+      [recipeIndex]: potentialProfit,
+    });
+  };
+
   return (
     <div className="location-price-display">
       <h3>Location: {location}</h3>
-      <p>
-        Recipe Type:{" "}
-        {enchantmentLevel > 0
-          ? `Enchantment Level ${enchantmentLevel}`
-          : "Base"}
-      </p>
 
-      {/* Check if we have recipes before attempting to render them */}
       {recipes.length > 0 ? (
         recipes.map((recipe, recipeIndex) => (
-          <div key={recipeIndex} className="recipe-item">
+          <div
+            key={`recipe-${recipeIndex}`}
+            className="recipe-block"
+            style={{ marginBottom: "40px" }}
+          >
             <h4>Recipe {recipeIndex + 1}</h4>
-            <div className="materials-list">
-              {recipe && recipe.length > 0 ? (
-                recipe.map((material, materialIndex) => {
-                  // Validate that material has the required properties
+
+            {/* Materials Section */}
+            <div className="materials-section">
+              {recipe.materials && recipe.materials.length > 0 ? (
+                recipe.materials.map((material, materialIndex) => {
                   if (!material || !material.uniquename || !material.count) {
-                    console.log(
-                      `Invalid material at index ${materialIndex} in recipe ${recipeIndex}`
-                    );
                     return null;
                   }
 
-                  // Construct the image URL
                   const imageUrl = `https://render.albiononline.com/v1/item/${appendEnchantment(
                     material.uniquename,
                     enchantmentLevel
                   )}.png`;
 
-                  console.log(
-                    `Current material being processed: ${material.uniquename} (x${material.count})`
-                  );
-                  console.log("Image URL being rendered:", imageUrl);
-
                   return (
                     <div
-                      key={material.uniquename}
+                      key={`${material.uniquename}-${recipeIndex}-${materialIndex}`} // Unique key for each material in the recipe
                       className="craft-material"
                       style={{
                         display: "flex",
                         alignItems: "center",
                         marginBottom: "10px",
+                        justifyContent: "space-between",
                       }}
                     >
-                      <img
-                        src={imageUrl}
-                        alt={material.uniquename}
-                        className="material-image"
-                        style={{
-                          width: "50px",
-                          height: "50px",
-                          marginRight: "10px",
-                        }}
-                      />
+                      <div style={{ display: "flex", alignItems: "center" }}>
+                        <img
+                          src={imageUrl}
+                          alt={material.uniquename}
+                          className="material-image"
+                          style={{
+                            width: "50px",
+                            height: "50px",
+                            marginRight: "10px",
+                          }}
+                        />
+                        <div>
+                          <p>
+                            {material.uniquename} (x{material.count})
+                          </p>
+                        </div>
+                      </div>
                       <div>
-                        <p>
-                          {material.uniquename} (x{material.count})
-                        </p>
-                        <p>
-                          Total: {material.count * 192}.00 {/* Example price */}
-                        </p>
+                        <p>Total: {material.count * 192}.00</p>
                       </div>
                     </div>
                   );
@@ -141,27 +146,48 @@ const LocationPriceDisplay = ({ location, itemData, enchantmentLevel }) => {
                 <p>No materials found for this recipe.</p>
               )}
             </div>
-            <div className="total-craft-cost">
+
+            {/* Total Craft Cost Section */}
+            <div className="total-craft-cost-section">
               <p>
-                Total Craft Cost for Recipe: {calculateTotalCost(recipe || [])}
+                <strong>Total Craft Cost for Recipe: </strong>
+                {calculateTotalCost(recipe.materials || [])}
               </p>
             </div>
+
+            {/* Item Price Input Section */}
+            <div className="item-price-section">
+              <label>
+                <strong>
+                  Item Price for {location} (Recipe {recipeIndex + 1}):{" "}
+                </strong>
+              </label>
+              <input
+                type="number"
+                value={itemPrices[recipeIndex] || 0}
+                onChange={(e) =>
+                  handlePriceChange(
+                    recipeIndex,
+                    parseFloat(e.target.value) || 0
+                  )
+                }
+              />
+            </div>
+
+            {/* Potential Profit Section */}
+            <div className="potential-profit-section">
+              <p>
+                <strong>Potential Profit (Recipe {recipeIndex + 1}): </strong>
+                {potentialProfits[recipeIndex] || 0}
+              </p>
+            </div>
+
+            <hr style={{ margin: "20px 0", border: "1px solid #444" }} />
           </div>
         ))
       ) : (
         <p>No recipes available for this item.</p>
       )}
-
-      {/* Input for item price */}
-      <div className="item-price-input">
-        <label>Item Price for {location}:</label>
-        <input type="number" defaultValue={0} />
-      </div>
-
-      {/* Potential Profit Calculation */}
-      <div className="potential-profit">
-        <p>Potential Profit: -1484.00</p> {/* Example calculation */}
-      </div>
     </div>
   );
 };
