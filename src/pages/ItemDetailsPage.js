@@ -1,16 +1,61 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import LocationPriceDisplay from "../components/LocationPriceDisplay"; // Import new component
+import LocationPriceDisplay from "../components/LocationPriceDisplay";
 
 const ItemDetailsPage = () => {
-  const { uniqueName } = useParams(); // Get the itemId from the URL
+  const { uniqueName } = useParams();
   const [itemData, setItemData] = useState(null);
+  const [displayName, setDisplayName] = useState(uniqueName); // Set uniqueName as default
   const [enchantmentLevel, setEnchantmentLevel] = useState(0);
   const [selectedLocations, setSelectedLocations] = useState([]);
-  const [prices, setPrices] = useState({}); // Store prices for each location
+  const [prices, setPrices] = useState({});
   const navigate = useNavigate();
 
-  // Fetch item data and handle enchantment
+  // Helper to remove the enchantment part from the item name
+  const getBaseItemName = (uniqueName) => {
+    return uniqueName.split("@")[0];
+  };
+
+  // Fetch displayName from items.txt
+  useEffect(() => {
+    const fetchDisplayName = async () => {
+      try {
+        const response = await fetch("/items.txt");
+        const text = await response.text();
+
+        // Parse the items.txt file
+        const items = text
+          .split("\n")
+          .map((line) => {
+            const [, uniqueNameWithSpaces, displayName] = line.split(":");
+            if (uniqueNameWithSpaces && displayName) {
+              return {
+                uniqueName: uniqueNameWithSpaces.trim(),
+                displayName: displayName.trim(),
+              };
+            }
+            return null;
+          })
+          .filter(Boolean); // Filter out any null values
+
+        const baseName = getBaseItemName(uniqueName);
+        const matchedItem = items.find((item) => item.uniqueName === baseName);
+
+        if (matchedItem) {
+          setDisplayName(matchedItem.displayName);
+        } else {
+          setDisplayName(uniqueName); // Fallback to unique name
+        }
+      } catch (error) {
+        console.error("Error fetching items.txt:", error);
+        setDisplayName(uniqueName); // Fallback to unique name in case of error
+      }
+    };
+
+    fetchDisplayName();
+  }, [uniqueName]);
+
+  // Fetch item data from Output.json
   useEffect(() => {
     const [itemBaseId, enchant] = uniqueName.split("@");
     const enchantment = parseInt(enchant) || 0;
@@ -25,6 +70,7 @@ const ItemDetailsPage = () => {
           data.weapon.find((itm) => itm.uniquename === itemBaseId);
 
         if (item) {
+          console.log("Fetched itemData:", item); // Debug log
           setItemData(item);
         } else {
           console.error("Item not found in Output.json");
@@ -61,7 +107,7 @@ const ItemDetailsPage = () => {
       return acc;
     }, {});
 
-    setPrices(mockPrices);
+    setPrices(mockPrices); // Set the prices state here
   };
 
   const handleEnchantmentChange = (level) => {
@@ -82,12 +128,12 @@ const ItemDetailsPage = () => {
             src={`https://render.albiononline.com/v1/item/${
               itemData.uniquename
             }${enchantmentLevel ? `@${enchantmentLevel}` : ""}.png`}
-            alt={itemData.displayName}
+            alt={displayName}
             className="item-image"
           />
         </div>
         <div className="item-details-right">
-          <h1 className="item-name">{itemData.displayName}</h1>
+          <h1 className="item-name">{displayName}</h1>
           <p>
             <strong>Tier:</strong> {itemData.tier}
           </p>
@@ -134,15 +180,16 @@ const ItemDetailsPage = () => {
           </button>
         </div>
       </div>
-
-      {/* Location Price Display Section Below */}
+      {/* Location Price Display Section */}
       <div className="location-prices-section">
         {selectedLocations.length > 0 &&
           selectedLocations.map((location) => (
             <LocationPriceDisplay
               key={location}
               location={location}
-              priceData={prices[location]}
+              priceData={prices[location]} // Use prices here
+              itemData={itemData} // Pass itemData to the component
+              enchantmentLevel={enchantmentLevel} // Pass enchantmentLevel to component
             />
           ))}
       </div>

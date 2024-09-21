@@ -280,3 +280,31 @@ h2 {
   border: 1px solid #67b7f7;
   margin-left: 10px;
 }
+.recipe-item {
+  margin: 10px 0;
+  padding: 10px;
+  border: 1px solid #333;
+  background-color: #222;
+}
+
+.craft-material {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.material-image {
+  width: 50px;
+  height: 50px;
+}
+
+.item-price-input input {
+  width: 100px;
+  margin-left: 10px;
+}
+
+.total-craft-cost,
+.potential-profit {
+  font-weight: bold;
+  margin-top: 10px;
+}
