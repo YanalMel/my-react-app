@@ -3,6 +3,7 @@ import Filters from "../components/Filters";
 import ItemList from "../components/ItemList";
 import Pagination from "../components/Pagination";
 import useFavorites from "../hooks/useFavorites";
+import { useNavigate } from "react-router-dom";
 
 export default function AuctionHouse() {
   const [items, setItems] = useState([]); // All items
@@ -13,6 +14,7 @@ export default function AuctionHouse() {
   const { favorites, toggleFavorite } = useFavorites();
   const [showFavorites, setShowFavorites] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchItems(); // Fetch items once when the component mounts
@@ -119,8 +121,7 @@ export default function AuctionHouse() {
   };
 
   const handleItemClick = (item) => {
-    // Use React Router navigation (if applicable) instead of a full page reload
-    window.location.href = `/item/${item.uniquename}`;
+    navigate(`/item/${item.uniquename}`);
   };
 
   const handlePageChange = (page) => {

@@ -12,6 +12,7 @@ h2 {
   margin-top: 20px;
 }
 
+/* Item Container */
 .item-container {
   display: grid;
   grid-template-columns: repeat(5, 1fr); /* 5 items per row */
@@ -59,24 +60,8 @@ h2 {
   color: #d1d1d1;
   margin: 10px 0;
 }
-.favorite-button {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 20px;
-  margin-top: 10px;
-  display: flex;
-  align-items: center;
-  gap: 5px; /* Add space between the heart and text */
-  color: #d1d1d1; /* Use a subtle neutral color */
-  transition: transform 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
-  padding: 8px 12px; /* Add some padding for spacing */
-  border-radius: 50px; /* Create a rounded shape around the button */
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15); /* Soft shadow for depth */
-  font-weight: 600; /* Add some weight for formality */
-  letter-spacing: 0.5px; /* Slight letter-spacing for formality */
-}
 
+/* Favorite Button */
 .favorite-button {
   background: none;
   border: none;
@@ -84,24 +69,20 @@ h2 {
   font-size: 20px;
   margin-top: 10px;
   display: flex;
-  justify-content: center; /* Center content horizontally */
-  align-items: center; /* Center content vertically */
-  gap: 5px; /* Add some space between the heart and the text */
-  padding: 8px 15px;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 12px;
   border-radius: 50px;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-  color: #d1d1d1; /* Neutral color for the button text */
-  transition: transform 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
+  color: #d1d1d1;
+  transition: transform 0.3s, color 0.3s, box-shadow 0.3s;
 }
 
 .favorite-button:hover {
   transform: scale(1.05);
   color: #ffffff;
   box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
-}
-
-.favorite-button span {
-  display: inline-block;
 }
 
 .favorite-button span.heart {
@@ -117,7 +98,7 @@ h2 {
   outline: none;
 }
 
-/* Filters styling */
+/* Filters */
 .filters {
   display: flex;
   justify-content: center;
@@ -133,7 +114,7 @@ h2 {
   border: 1px solid #444;
   background-color: #2b2e33;
   color: #fff;
-  height: 38px; /* Match the button height */
+  height: 38px;
 }
 
 .filters select:focus,
@@ -142,50 +123,7 @@ h2 {
   border-color: #67b7f7;
 }
 
-/* Button styling */
-button {
-  padding: 10px 20px;
-  border-radius: 5px;
-  border: none;
-  cursor: pointer;
-  font-size: 14px;
-  transition: background-color 0.3s ease;
-}
-
-button#searchButton {
-  background-color: #007bff;
-  color: white;
-}
-
-button#searchButton:hover {
-  background-color: #0056b3;
-}
-
-button#clearButton,
-button#showFavorites {
-  background-color: #6c757d;
-  color: white;
-}
-
-button#clearButton:hover,
-button#showFavorites:hover {
-  background-color: #5a6268;
-}
-
-button {
-  height: 38px; /* Ensures button height is the same as input/selects */
-}
-
-/* Align the action buttons next to the filters */
-.action-buttons {
-  display: flex;
-  gap: 10px;
-}
-
-.action-buttons button {
-  height: 38px;
-  padding: 8px 16px;
-}
+/* Pagination */
 .pagination-container {
   display: flex;
   flex-direction: column;
@@ -195,7 +133,7 @@ button {
 }
 
 .page-info {
-  margin-bottom: 10px; /* Add some space between the page info and the pagination buttons */
+  margin-bottom: 10px;
   font-size: 16px;
   color: #fff;
 }
@@ -204,7 +142,7 @@ button {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px; /* Adjust the spacing between the buttons */
+  gap: 8px;
 }
 
 .pagination button {
@@ -227,150 +165,118 @@ button {
   border: 1px solid #007bff;
   box-shadow: 0 0 10px rgba(0, 123, 255, 0.5);
 }
-.item-details {
-  background-color: #121212;
-  padding: 30px;
-  border-radius: 15px;
-  max-width: 800px;
+/* Item Details */
+.item-details-container {
+  max-width: 1300px; /* Updated width */
   margin: 50px auto;
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.7);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
-.item-header {
+.item-details-box {
+  background-color: #2b2e33;
+  color: #fff;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.8);
+  width: 100%;
   display: flex;
+  justify-content: space-between;
+}
+
+.item-details-left {
+  flex: 1;
+  display: flex;
+  justify-content: center;
   align-items: center;
-  gap: 20px;
 }
 
 .item-image {
-  border: 3px solid #;
+  width: 180px;
+  height: 180px;
   border-radius: 12px;
-  padding: 10px;
-  max-width: 150px;
-}
-
-.item-info {
-  flex: 1;
-  color: #eee;
-}
-
-.item-info h1 {
-  font-size: 2.5rem;
-  color: #00ffcc;
-  text-shadow: 0 0 10px #00ffcc;
-}
-
-.item-info p {
-  font-size: 1.2rem;
-}
-
-.location-selector {
-  margin: 20px 0;
-}
-
-.location-selector h3 {
-  font-size: 1.5rem;
-  color: #67b7f7;
-}
-
-.location-checkbox {
-  margin: 10px 10px 10px 0;
-  font-size: 1.1rem;
-  color: #eee;
-}
-
-.location-checkbox input {
-  margin-right: 10px;
-}
-
-.fetch-prices-btn {
-  background-color: #00aaff;
-  color: #fff;
-  border: none;
-  padding: 5px 30px;
-  font-size: 1.1rem;
-  border-radius: 8px;
-  cursor: pointer;
-  box-shadow: 0 0 15px rgba(0, 170, 255, 0.7);
-  transition: background-color 0.3s ease;
-}
-
-.fetch-prices-btn:hover {
-  background-color: #0088cc;
-}
-
-.profit-section {
-  margin-top: 30px;
   background-color: #1d1f23;
+  padding: 10px;
+  border: 3px solid #67b7f7;
+}
+
+.item-details-right {
+  flex: 2;
   padding: 20px;
-  border-radius: 10px;
-  box-shadow: 0 0 15px rgba(0, 170, 255, 0.2);
-  text-align: center;
 }
 
-.profit-section h2 {
+.item-name {
   font-size: 2rem;
-  color: #00ffcc;
-  margin-bottom: 15px;
+  color: #67b7f7;
+  margin-bottom: 10px;
 }
 
-.profit-section p {
-  font-size: 1.2rem;
-  color: #fff;
-}
-.location-profit-calculator {
-  margin-top: 20px;
-  padding: 10px;
-  border: 1px solid #333;
-  border-radius: 10px;
-  background-color: #1e1e1e;
-  color: #ddd;
-  max-width: 600px;
-  margin-bottom: 20px;
-}
-
-.location-profit-calculator h3 {
-  color: #4caf50; /* Use a color that pops */
-}
-
-.resource-cost {
-  display: flex;
-  justify-content: space-between;
-  padding: 10px;
-  border-bottom: 1px solid #444;
-}
-
-.resource-cost img {
-  width: 50px;
-  height: 50px;
-}
-
-.price-input {
-  margin-top: 15px;
-}
-
-.cost-summary {
-  margin-top: 20px;
-  padding: 10px;
-  background-color: #222;
-  border-radius: 5px;
-}
-
-.cost-summary p {
-  margin: 5px 0;
-  color: #fff;
-}
-
+/* Fetch Prices Button */
 .fetch-prices-btn {
-  margin-top: 15px;
-  padding: 8px 15px;
   background-color: #007bff;
   color: white;
+  padding: 12px 25px;
   border: none;
   border-radius: 5px;
   cursor: pointer;
+  font-size: 1.1rem;
+  margin-top: 20px;
 }
 
 .fetch-prices-btn:hover {
   background-color: #0056b3;
+}
+
+/* Location Price Section */
+.location-prices-section {
+  background-color: #2b2e33;
+  color: #fff;
+  margin-top: 20px;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.8);
+  width: 100%; /* Matches the item-details-container */
+}
+
+/* Styling for the locations names */
+.location-price-display {
+  background-color: #1e1e1e;
+  padding: 20px;
+  border-radius: 10px;
+  margin-top: 10px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.location-price-display h3 {
+  font-size: 1.8rem;
+  color: #67b7f7;
+}
+
+/* Location checkbox styles */
+.locations label {
+  font-size: 1.2rem; /* Increased size for better visibility */
+  color: #ffffff;
+  margin-right: 15px; /* Add space between the checkboxes */
+  display: flex;
+  align-items: center;
+}
+
+.locations label input[type="checkbox"] {
+  margin-right: 10px; /* Add space between checkbox and label */
+  transform: scale(1.2); /* Make checkbox bigger */
+}
+
+/* Enchantment Level Dropdown */
+.enchantment-select {
+  padding: 5px;
+  border-radius: 5px;
+  background-color: #2b2e33;
+  color: white;
+  font-size: 1rem;
+  border: 1px solid #67b7f7;
+  margin-left: 10px;
 }
