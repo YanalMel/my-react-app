@@ -29,6 +29,34 @@ const appendEnchantment = (uniquename, enchantmentLevel) => {
   return uniquename;
 };
 
+// Group prices by location and find the lowest sell price per item (ignoring quality)
+function groupPricesByLocation(data) {
+  const priceMapByLocation = {};
+
+  data.forEach((priceInfo) => {
+    const { item_id, city, sell_price_min } = priceInfo;
+
+    if (!priceMapByLocation[city]) {
+      priceMapByLocation[city] = {};
+    }
+
+    // Store the lowest non-zero price across all qualities
+    if (!priceMapByLocation[city][item_id]) {
+      priceMapByLocation[city][item_id] = sell_price_min || 0;
+    } else {
+      if (
+        sell_price_min > 0 &&
+        (sell_price_min < priceMapByLocation[city][item_id] ||
+          priceMapByLocation[city][item_id] === 0)
+      ) {
+        priceMapByLocation[city][item_id] = sell_price_min;
+      }
+    }
+  });
+
+  return priceMapByLocation;
+}
+
 const LocationPriceDisplay = ({
   location,
   itemData,
@@ -41,7 +69,7 @@ const LocationPriceDisplay = ({
   const [potentialProfits, setPotentialProfits] = useState({});
   const [itemDisplayNames, setItemDisplayNames] = useState({});
   const [materialPrices, setMaterialPrices] = useState({});
-  const [loading, setLoading] = useState(false); // Track if API is loading
+  const [loading, setLoading] = useState(true);
 
   // Fetch and parse items.txt to map uniqueName -> displayName
   useEffect(() => {
@@ -76,20 +104,17 @@ const LocationPriceDisplay = ({
     fetchItemDisplayNames();
   }, []);
 
-  // Deduplicate material names and trigger the API fetch
+  // Fetch prices from the API
   const fetchApiPrices = useCallback(async () => {
     if (!fetchTriggered) return; // Do nothing if the fetch isn't triggered
-    setLoading(true); // Set loading state to true before API call
+    setLoading(true);
     try {
-      // Extract and deduplicate material names from recipes
-      const materialNamesSet = new Set(
-        recipes.flatMap((recipe) =>
+      const materialNames = recipes
+        .flatMap((recipe) =>
           recipe.materials.map((material) => material.uniquename)
         )
-      );
+        .join(",");
 
-      // Construct the material names and API URL
-      const materialNames = Array.from(materialNamesSet).join(",");
       const apiUrl = `https://west.albion-online-data.com/api/v2/stats/prices/${itemData.uniquename},${materialNames}?locations=${location}`;
 
       console.log("Fetching prices from API:", apiUrl); // Log the API call
@@ -97,19 +122,17 @@ const LocationPriceDisplay = ({
       const response = await fetch(apiUrl);
       const data = await response.json();
 
-      // Log the API response to the console for debugging purposes
       console.log("API Response:", data); // Log the API response
 
-      const priceMap = {};
-      data.forEach((price) => {
-        priceMap[price.item_id] = price.sell_price_min || 0;
-      });
+      // Group prices by location using the new groupPricesByLocation function
+      const groupedPrices = groupPricesByLocation(data);
 
-      setMaterialPrices(priceMap);
+      // Update material prices for the specific location
+      setMaterialPrices(groupedPrices[location] || {});
     } catch (error) {
       console.error("Error fetching prices:", error);
     } finally {
-      setLoading(false); // Stop loading state after fetching is done
+      setLoading(false); // Mark loading as false once data is fetched
       resetFetchTrigger(); // Reset fetch trigger after fetching
     }
   }, [recipes, itemData, location, fetchTriggered, resetFetchTrigger]);
@@ -161,7 +184,7 @@ const LocationPriceDisplay = ({
   };
 
   if (loading) {
-    return <p>Loading prices...</p>; // Show loading message while API call is in progress
+    return <p>Loading prices...</p>;
   }
 
   return (
@@ -211,8 +234,9 @@ const LocationPriceDisplay = ({
                         <p>
                           Total:{" "}
                           {material.count *
-                            (materialPrices[material.uniquename] || 192)}
-                          .00
+                            (materialPrices[material.uniquename] || 0)}{" "}
+                          (Price per unit:{" "}
+                          {materialPrices[material.uniquename] || "N/A"})
                         </p>
                       </div>
                     </div>

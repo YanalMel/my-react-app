@@ -8,7 +8,6 @@ const ItemDetailsPage = () => {
   const [displayName, setDisplayName] = useState(uniqueName);
   const [enchantmentLevel, setEnchantmentLevel] = useState(0);
   const [selectedLocations, setSelectedLocations] = useState([]);
-  const [prices, setPrices] = useState({});
   const [fetchTriggered, setFetchTriggered] = useState(false); // Add this state to trigger fetch
 
   const navigate = useNavigate();
