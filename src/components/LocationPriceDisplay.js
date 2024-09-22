@@ -20,11 +20,19 @@ const processCraftResource = (craftresourceArray) => {
   return materials;
 };
 
-// Define appendEnchantment function here
-const appendEnchantment = (uniquename, enchantmentLevel) => {
+// Append the correct enchantment level to the **material** name (LEVELx@x for resources)
+const appendEnchantmentToMaterial = (uniquename, enchantmentLevel) => {
   const isArtifact = uniquename.includes("ARTEFACT");
   if (enchantmentLevel > 0 && !isArtifact) {
     return `${uniquename}_LEVEL${enchantmentLevel}@${enchantmentLevel}`;
+  }
+  return uniquename;
+};
+
+// Append the correct enchantment level to the **item** name (@x for items)
+const appendEnchantmentToItem = (uniquename, enchantmentLevel) => {
+  if (enchantmentLevel > 0) {
+    return `${uniquename}@${enchantmentLevel}`;
   }
   return uniquename;
 };
@@ -104,24 +112,31 @@ const LocationPriceDisplay = ({
     fetchItemDisplayNames();
   }, []);
 
-  // Fetch prices from the API
+  // Fetch prices from the API (materials use LEVELx@x, item uses @x)
   const fetchApiPrices = useCallback(async () => {
     if (!fetchTriggered) return; // Do nothing if the fetch isn't triggered
     setLoading(true);
     try {
+      // Append enchantment levels to **materials** (LEVELx@x) and use base name for item (with @x)
       const materialNames = recipes
         .flatMap((recipe) =>
-          recipe.materials.map((material) => material.uniquename)
+          recipe.materials.map((material) =>
+            appendEnchantmentToMaterial(material.uniquename, enchantmentLevel)
+          )
         )
         .join(",");
 
-      const apiUrl = `https://west.albion-online-data.com/api/v2/stats/prices/${itemData.uniquename},${materialNames}?locations=${location}`;
+      const apiUrl = `https://west.albion-online-data.com/api/v2/stats/prices/${appendEnchantmentToItem(
+        itemData.uniquename,
+        enchantmentLevel
+      )},${materialNames}?locations=${location}`;
 
       console.log("Fetching prices from API:", apiUrl); // Log the API call
 
       const response = await fetch(apiUrl);
       const data = await response.json();
 
+      // Log the API response to the console for debugging purposes
       console.log("API Response:", data); // Log the API response
 
       // Group prices by location using the new groupPricesByLocation function
@@ -135,7 +150,14 @@ const LocationPriceDisplay = ({
       setLoading(false); // Mark loading as false once data is fetched
       resetFetchTrigger(); // Reset fetch trigger after fetching
     }
-  }, [recipes, itemData, location, fetchTriggered, resetFetchTrigger]);
+  }, [
+    recipes,
+    itemData,
+    location,
+    enchantmentLevel,
+    fetchTriggered,
+    resetFetchTrigger,
+  ]);
 
   // Extract base recipes and split nested arrays
   useEffect(() => {
@@ -208,7 +230,7 @@ const LocationPriceDisplay = ({
                   const displayName =
                     itemDisplayNames[material.uniquename] ||
                     material.uniquename;
-                  const imageUrl = `https://render.albiononline.com/v1/item/${appendEnchantment(
+                  const imageUrl = `https://render.albiononline.com/v1/item/${appendEnchantmentToMaterial(
                     material.uniquename,
                     enchantmentLevel
                   )}.png`;
