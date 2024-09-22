@@ -41,22 +41,21 @@ const LocationPriceDisplay = ({ location, itemData, enchantmentLevel }) => {
   // Extract base recipes and split nested arrays
   useEffect(() => {
     if (itemData && Array.isArray(itemData.craftresource)) {
-      // First level of craftresource (recipes)
-      const topLevelCraftResources = itemData.craftresource;
-
-      // Safely map over top-level resources and their nested resources
-      const processedRecipes = topLevelCraftResources.map((resource) => {
-        // Ensure that resource.craftresource exists and is an array
-        return Array.isArray(resource.craftresource)
-          ? resource.craftresource.map((nestedResource) => ({
-              materials: processCraftResource(nestedResource.craftresource),
-            }))
-          : [];
+      // Safely map over top-level craftresource arrays and their nested resources
+      const processedRecipes = itemData.craftresource.map((resourceGroup) => {
+        // Ensure that resourceGroup.craftresource exists and is an array
+        if (Array.isArray(resourceGroup.craftresource)) {
+          return {
+            type: resourceGroup.type,
+            materials: processCraftResource(resourceGroup.craftresource),
+          };
+        } else {
+          return null;
+        }
       });
 
-      // Flatten the resulting array of recipes
-      const flattenedRecipes = processedRecipes.flat();
-      setRecipes(flattenedRecipes);
+      // Filter out invalid entries and set recipes
+      setRecipes(processedRecipes.filter(Boolean));
     } else {
       setRecipes([]); // If itemData or craftresource is missing, clear the recipes
     }
@@ -93,7 +92,9 @@ const LocationPriceDisplay = ({ location, itemData, enchantmentLevel }) => {
             className="recipe-block"
             style={{ marginBottom: "40px" }}
           >
-            <h4>Recipe {recipeIndex + 1}</h4>
+            <h4>
+              Recipe {recipeIndex + 1} ({recipe.type})
+            </h4>
 
             {/* Materials Section */}
             <div className="materials-section">
