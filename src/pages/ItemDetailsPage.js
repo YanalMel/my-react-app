@@ -5,10 +5,12 @@ import LocationPriceDisplay from "../components/LocationPriceDisplay";
 const ItemDetailsPage = () => {
   const { uniqueName } = useParams();
   const [itemData, setItemData] = useState(null);
-  const [displayName, setDisplayName] = useState(uniqueName); // Set uniqueName as default
+  const [displayName, setDisplayName] = useState(uniqueName);
   const [enchantmentLevel, setEnchantmentLevel] = useState(0);
   const [selectedLocations, setSelectedLocations] = useState([]);
   const [prices, setPrices] = useState({});
+  const [fetchTriggered, setFetchTriggered] = useState(false); // Add this state to trigger fetch
+
   const navigate = useNavigate();
 
   // Helper to remove the enchantment part from the item name
@@ -23,7 +25,6 @@ const ItemDetailsPage = () => {
         const response = await fetch("/items.txt");
         const text = await response.text();
 
-        // Parse the items.txt file
         const items = text
           .split("\n")
           .map((line) => {
@@ -36,7 +37,7 @@ const ItemDetailsPage = () => {
             }
             return null;
           })
-          .filter(Boolean); // Filter out any null values
+          .filter(Boolean);
 
         const baseName = getBaseItemName(uniqueName);
         const matchedItem = items.find((item) => item.uniqueName === baseName);
@@ -44,7 +45,7 @@ const ItemDetailsPage = () => {
         if (matchedItem) {
           setDisplayName(matchedItem.displayName);
         } else {
-          setDisplayName(uniqueName); // Fallback to unique name
+          setDisplayName(uniqueName);
         }
       } catch (error) {
         console.error("Error fetching items.txt:", error);
@@ -101,13 +102,9 @@ const ItemDetailsPage = () => {
     );
   };
 
-  const handleFetchPrices = () => {
-    const mockPrices = selectedLocations.reduce((acc, location) => {
-      acc[location] = `$${Math.floor(Math.random() * 1000)}`;
-      return acc;
-    }, {});
-
-    setPrices(mockPrices); // Set the prices state here
+  const handleFetchPrices = async () => {
+    console.log("Fetch Prices button clicked");
+    setFetchTriggered(true); // Trigger fetch on button click
   };
 
   const handleEnchantmentChange = (level) => {
@@ -152,7 +149,7 @@ const ItemDetailsPage = () => {
               onChange={(e) => handleEnchantmentChange(e.target.value)}
               className="enchantment-select"
             >
-              {[0, 1, 2, 3].map((level) => (
+              {[0, 1, 2, 3, 4].map((level) => (
                 <option key={level} value={level}>
                   Level {level}
                 </option>
@@ -187,9 +184,10 @@ const ItemDetailsPage = () => {
             <LocationPriceDisplay
               key={location}
               location={location}
-              priceData={prices[location]} // Use prices here
-              itemData={itemData} // Pass itemData to the component
-              enchantmentLevel={enchantmentLevel} // Pass enchantmentLevel to component
+              itemData={itemData}
+              enchantmentLevel={enchantmentLevel}
+              fetchTriggered={fetchTriggered} // Pass fetchTriggered to the component
+              resetFetchTrigger={() => setFetchTriggered(false)} // Reset fetch trigger
             />
           ))}
       </div>
