@@ -20,39 +20,114 @@ const processCraftResource = (craftresourceArray) => {
   return materials;
 };
 
-const LocationPriceDisplay = ({ location, itemData, enchantmentLevel }) => {
+// Define appendEnchantment function here
+const appendEnchantment = (uniquename, enchantmentLevel) => {
+  const isArtifact = uniquename.includes("ARTEFACT");
+  if (enchantmentLevel > 0 && !isArtifact) {
+    return `${uniquename}_LEVEL${enchantmentLevel}@${enchantmentLevel}`;
+  }
+  return uniquename;
+};
+
+const LocationPriceDisplay = ({
+  location,
+  itemData,
+  enchantmentLevel,
+  fetchTriggered,
+  resetFetchTrigger,
+}) => {
   const [recipes, setRecipes] = useState([]);
   const [itemPrices, setItemPrices] = useState({});
   const [potentialProfits, setPotentialProfits] = useState({});
+  const [itemDisplayNames, setItemDisplayNames] = useState({});
+  const [materialPrices, setMaterialPrices] = useState({});
+  const [loading, setLoading] = useState(false); // Track if API is loading
 
-  // Helper function to add enchantment level to resource names, excluding artifacts
-  const appendEnchantment = (uniquename, enchantmentLevel) => {
-    const isArtifact = uniquename.includes("ARTEFACT");
-    if (enchantmentLevel > 0 && !isArtifact) {
-      return `${uniquename}_LEVEL${enchantmentLevel}@${enchantmentLevel}`;
+  // Fetch and parse items.txt to map uniqueName -> displayName
+  useEffect(() => {
+    const fetchItemDisplayNames = async () => {
+      try {
+        const response = await fetch("/items.txt");
+        const text = await response.text();
+
+        const items = text.split("\n").map((line) => {
+          const [, uniqueNameWithSpaces, displayName] = line.split(":");
+          if (uniqueNameWithSpaces && displayName) {
+            return {
+              uniqueName: uniqueNameWithSpaces.trim(),
+              displayName: displayName.trim(),
+            };
+          }
+          return null;
+        });
+
+        const displayNameMap = {};
+        items.forEach((item) => {
+          if (item && item.uniqueName && item.displayName) {
+            displayNameMap[item.uniqueName] = item.displayName;
+          }
+        });
+        setItemDisplayNames(displayNameMap);
+      } catch (error) {
+        console.error("Error fetching items.txt:", error);
+      }
+    };
+
+    fetchItemDisplayNames();
+  }, []);
+
+  // Deduplicate material names and trigger the API fetch
+  const fetchApiPrices = useCallback(async () => {
+    if (!fetchTriggered) return; // Do nothing if the fetch isn't triggered
+    setLoading(true); // Set loading state to true before API call
+    try {
+      // Extract and deduplicate material names from recipes
+      const materialNamesSet = new Set(
+        recipes.flatMap((recipe) =>
+          recipe.materials.map((material) => material.uniquename)
+        )
+      );
+
+      // Construct the material names and API URL
+      const materialNames = Array.from(materialNamesSet).join(",");
+      const apiUrl = `https://west.albion-online-data.com/api/v2/stats/prices/${itemData.uniquename},${materialNames}?locations=${location}`;
+
+      console.log("Fetching prices from API:", apiUrl); // Log the API call
+
+      const response = await fetch(apiUrl);
+      const data = await response.json();
+
+      // Log the API response to the console for debugging purposes
+      console.log("API Response:", data); // Log the API response
+
+      const priceMap = {};
+      data.forEach((price) => {
+        priceMap[price.item_id] = price.sell_price_min || 0;
+      });
+
+      setMaterialPrices(priceMap);
+    } catch (error) {
+      console.error("Error fetching prices:", error);
+    } finally {
+      setLoading(false); // Stop loading state after fetching is done
+      resetFetchTrigger(); // Reset fetch trigger after fetching
     }
-    return uniquename;
-  };
+  }, [recipes, itemData, location, fetchTriggered, resetFetchTrigger]);
 
   // Extract base recipes and split nested arrays
   useEffect(() => {
     if (itemData && Array.isArray(itemData.craftresource)) {
-      // First level of craftresource (recipes)
-      const topLevelCraftResources = itemData.craftresource;
-
-      // Safely map over top-level resources and their nested resources
-      const processedRecipes = topLevelCraftResources.map((resource) => {
-        // Ensure that resource.craftresource exists and is an array
-        return Array.isArray(resource.craftresource)
-          ? resource.craftresource.map((nestedResource) => ({
-              materials: processCraftResource(nestedResource.craftresource),
-            }))
-          : [];
+      const processedRecipes = itemData.craftresource.map((resourceGroup) => {
+        if (Array.isArray(resourceGroup.craftresource)) {
+          return {
+            type: resourceGroup.type,
+            materials: processCraftResource(resourceGroup.craftresource),
+          };
+        }
+        return null;
       });
 
-      // Flatten the resulting array of recipes
-      const flattenedRecipes = processedRecipes.flat();
-      setRecipes(flattenedRecipes);
+      setRecipes(processedRecipes.filter(Boolean));
     } else {
       setRecipes([]);
     }
@@ -95,14 +170,11 @@ const LocationPriceDisplay = ({ location, itemData, enchantmentLevel }) => {
 
       {recipes.length > 0 ? (
         recipes.map((recipe, recipeIndex) => (
-          <div
-            key={`recipe-${recipeIndex}`}
-            className="recipe-block"
-            style={{ marginBottom: "40px" }}
-          >
-            <h4>Recipe {recipeIndex + 1}</h4>
+          <div key={`recipe-${recipeIndex}`} className="recipe-block">
+            <h4>
+              Recipe {recipeIndex + 1} ({recipe.type})
+            </h4>
 
-            {/* Materials Section */}
             <div className="materials-section">
               {recipe.materials && recipe.materials.length > 0 ? (
                 recipe.materials.map((material, materialIndex) => {
@@ -110,6 +182,9 @@ const LocationPriceDisplay = ({ location, itemData, enchantmentLevel }) => {
                     return null;
                   }
 
+                  const displayName =
+                    itemDisplayNames[material.uniquename] ||
+                    material.uniquename;
                   const imageUrl = `https://render.albiononline.com/v1/item/${appendEnchantment(
                     material.uniquename,
                     enchantmentLevel
@@ -120,7 +195,7 @@ const LocationPriceDisplay = ({ location, itemData, enchantmentLevel }) => {
                       key={`${material.uniquename}-${recipeIndex}-${materialIndex}`}
                       className="craft-material"
                     >
-                      <div className="material-details">
+                      <div style={{ display: "flex", alignItems: "center" }}>
                         <img
                           src={imageUrl}
                           alt={material.uniquename}
@@ -133,7 +208,12 @@ const LocationPriceDisplay = ({ location, itemData, enchantmentLevel }) => {
                         </div>
                       </div>
                       <div>
-                        <p>Total: {material.count * 192}.00</p>
+                        <p>
+                          Total:{" "}
+                          {material.count *
+                            (materialPrices[material.uniquename] || 192)}
+                          .00
+                        </p>
                       </div>
                     </div>
                   );
@@ -175,7 +255,7 @@ const LocationPriceDisplay = ({ location, itemData, enchantmentLevel }) => {
               </p>
             </div>
 
-            <hr className="divider" />
+            <hr style={{ margin: "20px 0", border: "1px solid #444" }} />
           </div>
         ))
       ) : (
