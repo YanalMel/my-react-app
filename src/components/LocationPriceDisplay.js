@@ -41,6 +41,7 @@ const LocationPriceDisplay = ({
   const [potentialProfits, setPotentialProfits] = useState({});
   const [itemDisplayNames, setItemDisplayNames] = useState({});
   const [materialPrices, setMaterialPrices] = useState({});
+  const [loading, setLoading] = useState(false); // Track if API is loading
 
   // Fetch and parse items.txt to map uniqueName -> displayName
   useEffect(() => {
@@ -78,6 +79,7 @@ const LocationPriceDisplay = ({
   // Deduplicate material names and trigger the API fetch
   const fetchApiPrices = useCallback(async () => {
     if (!fetchTriggered) return; // Do nothing if the fetch isn't triggered
+    setLoading(true); // Set loading state to true before API call
     try {
       // Extract and deduplicate material names from recipes
       const materialNamesSet = new Set(
@@ -107,6 +109,7 @@ const LocationPriceDisplay = ({
     } catch (error) {
       console.error("Error fetching prices:", error);
     } finally {
+      setLoading(false); // Stop loading state after fetching is done
       resetFetchTrigger(); // Reset fetch trigger after fetching
     }
   }, [recipes, itemData, location, fetchTriggered, resetFetchTrigger]);
@@ -156,6 +159,10 @@ const LocationPriceDisplay = ({
       [recipeIndex]: potentialProfit,
     });
   };
+
+  if (loading) {
+    return <p>Loading prices...</p>; // Show loading message while API call is in progress
+  }
 
   return (
     <div className="location-price-display">
