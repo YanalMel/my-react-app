@@ -152,7 +152,7 @@ const ItemDetailsPage = () => {
               onChange={(e) => handleEnchantmentChange(e.target.value)}
               className="enchantment-select"
             >
-              {[0, 1, 2, 3].map((level) => (
+              {[0, 1, 2, 3, 4].map((level) => (
                 <option key={level} value={level}>
                   Level {level}
                 </option>

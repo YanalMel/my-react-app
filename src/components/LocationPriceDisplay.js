@@ -24,26 +24,59 @@ const processCraftResource = (craftresourceArray) => {
   return materials;
 };
 
+// Define appendEnchantment function here
+const appendEnchantment = (uniquename, enchantmentLevel) => {
+  const isArtifact = uniquename.includes("ARTEFACT");
+  if (enchantmentLevel > 0 && !isArtifact) {
+    return `${uniquename}_LEVEL${enchantmentLevel}@${enchantmentLevel}`;
+  }
+  return uniquename;
+};
+
 const LocationPriceDisplay = ({ location, itemData, enchantmentLevel }) => {
   const [recipes, setRecipes] = useState([]);
   const [itemPrices, setItemPrices] = useState({});
   const [potentialProfits, setPotentialProfits] = useState({});
+  const [itemDisplayNames, setItemDisplayNames] = useState({});
 
-  // Helper function to add enchantment level to resource names, excluding artifacts
-  const appendEnchantment = (uniquename, enchantmentLevel) => {
-    const isArtifact = uniquename.includes("ARTEFACT");
-    if (enchantmentLevel > 0 && !isArtifact) {
-      return `${uniquename}_LEVEL${enchantmentLevel}@${enchantmentLevel}`;
-    }
-    return uniquename;
-  };
+  // Fetch and parse items.txt to map uniqueName -> displayName
+  useEffect(() => {
+    const fetchItemDisplayNames = async () => {
+      try {
+        const response = await fetch("/items.txt"); // Ensure items.txt is accessible
+        const text = await response.text();
+
+        const items = text.split("\n").map((line) => {
+          const [, uniqueNameWithSpaces, displayName] = line.split(":");
+          if (uniqueNameWithSpaces && displayName) {
+            return {
+              uniqueName: uniqueNameWithSpaces.trim(),
+              displayName: displayName.trim(),
+            };
+          }
+          return null;
+        });
+
+        // Create a mapping of uniqueName to displayName
+        const displayNameMap = {};
+        items.forEach((item) => {
+          if (item && item.uniqueName && item.displayName) {
+            displayNameMap[item.uniqueName] = item.displayName;
+          }
+        });
+        setItemDisplayNames(displayNameMap);
+      } catch (error) {
+        console.error("Error fetching items.txt:", error);
+      }
+    };
+
+    fetchItemDisplayNames();
+  }, []);
 
   // Extract base recipes and split nested arrays
   useEffect(() => {
     if (itemData && Array.isArray(itemData.craftresource)) {
-      // Safely map over top-level craftresource arrays and their nested resources
       const processedRecipes = itemData.craftresource.map((resourceGroup) => {
-        // Ensure that resourceGroup.craftresource exists and is an array
         if (Array.isArray(resourceGroup.craftresource)) {
           return {
             type: resourceGroup.type,
@@ -57,7 +90,7 @@ const LocationPriceDisplay = ({ location, itemData, enchantmentLevel }) => {
       // Filter out invalid entries and set recipes
       setRecipes(processedRecipes.filter(Boolean));
     } else {
-      setRecipes([]); // If itemData or craftresource is missing, clear the recipes
+      setRecipes([]);
     }
   }, [itemData, enchantmentLevel]);
 
@@ -72,7 +105,6 @@ const LocationPriceDisplay = ({ location, itemData, enchantmentLevel }) => {
     const newItemPrices = { ...itemPrices, [recipeIndex]: price };
     setItemPrices(newItemPrices);
 
-    // Calculate potential profit (example calculation: sale price - craft cost)
     const craftCost = calculateTotalCost(recipes[recipeIndex].materials);
     const potentialProfit = price - craftCost;
     setPotentialProfits({
@@ -87,11 +119,7 @@ const LocationPriceDisplay = ({ location, itemData, enchantmentLevel }) => {
 
       {recipes.length > 0 ? (
         recipes.map((recipe, recipeIndex) => (
-          <div
-            key={`recipe-${recipeIndex}`}
-            className="recipe-block"
-            style={{ marginBottom: "40px" }}
-          >
+          <div key={`recipe-${recipeIndex}`} className="recipe-block">
             <h4>
               Recipe {recipeIndex + 1} ({recipe.type})
             </h4>
@@ -104,6 +132,10 @@ const LocationPriceDisplay = ({ location, itemData, enchantmentLevel }) => {
                     return null;
                   }
 
+                  const displayName =
+                    itemDisplayNames[material.uniquename] ||
+                    material.uniquename;
+
                   const imageUrl = `https://render.albiononline.com/v1/item/${appendEnchantment(
                     material.uniquename,
                     enchantmentLevel
@@ -111,33 +143,22 @@ const LocationPriceDisplay = ({ location, itemData, enchantmentLevel }) => {
 
                   return (
                     <div
-                      key={`${material.uniquename}-${recipeIndex}-${materialIndex}`} // Unique key for each material in the recipe
+                      key={`${material.uniquename}-${recipeIndex}-${materialIndex}`}
                       className="craft-material"
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        marginBottom: "10px",
-                        justifyContent: "space-between",
-                      }}
                     >
-                      <div style={{ display: "flex", alignItems: "center" }}>
+                      <div className="material-details">
                         <img
                           src={imageUrl}
                           alt={material.uniquename}
                           className="material-image"
-                          style={{
-                            width: "50px",
-                            height: "50px",
-                            marginRight: "10px",
-                          }}
                         />
                         <div>
                           <p>
-                            {material.uniquename} (x{material.count})
+                            {displayName} (x{material.count})
                           </p>
                         </div>
                       </div>
-                      <div>
+                      <div className="material-total">
                         <p>Total: {material.count * 192}.00</p>
                       </div>
                     </div>
@@ -160,7 +181,7 @@ const LocationPriceDisplay = ({ location, itemData, enchantmentLevel }) => {
             <div className="item-price-section">
               <label>
                 <strong>
-                  Item Price for {location} (Recipe {recipeIndex + 1}):{" "}
+                  Item Price for {location} (Recipe {recipeIndex + 1}):
                 </strong>
               </label>
               <input
@@ -183,7 +204,7 @@ const LocationPriceDisplay = ({ location, itemData, enchantmentLevel }) => {
               </p>
             </div>
 
-            <hr style={{ margin: "20px 0", border: "1px solid #444" }} />
+            <hr className="divider" />
           </div>
         ))
       ) : (
