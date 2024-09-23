@@ -256,9 +256,27 @@ const LocationPriceDisplay = ({
                         <p>
                           Total:{" "}
                           {material.count *
-                            (materialPrices[material.uniquename] || 0)}{" "}
+                            (materialPrices[
+                              // For resources, append _LEVELx@x if enchantment level > 0, but not for artifacts
+                              material.uniquename.includes("ARTEFACT")
+                                ? material.uniquename // Keep artifact names unchanged
+                                : `${material.uniquename}${
+                                    enchantmentLevel > 0
+                                      ? `_LEVEL${enchantmentLevel}@${enchantmentLevel}`
+                                      : ""
+                                  }`
+                            ] || 0)}{" "}
                           (Price per unit:{" "}
-                          {materialPrices[material.uniquename] || "N/A"})
+                          {materialPrices[
+                            material.uniquename.includes("ARTEFACT")
+                              ? material.uniquename
+                              : `${material.uniquename}${
+                                  enchantmentLevel > 0
+                                    ? `_LEVEL${enchantmentLevel}@${enchantmentLevel}`
+                                    : ""
+                                }`
+                          ] || "N/A"}
+                          )
                         </p>
                       </div>
                     </div>
